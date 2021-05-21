@@ -1,0 +1,25 @@
+name: Ruby
+description: Using rbenv.
+schemaVersion: 1.0
+phases:
+  - name: build
+    steps:
+      - name: InstallRbenv
+        action: ExecuteBash
+        inputs:
+          commands:
+            - sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 autoconf automake libtool bison curl sqlite-devel
+            - sudo git clone https://github.com/sstephenson/rbenv.git /usr/local/rbenv
+            - sudo mkdir -p /usr/local/rbenv/plugins
+            - sudo git clone https://github.com/rbenv/ruby-build.git /usr/local/rbenv/plugins/ruby-build
+            - sudo chgrp -R wheel /usr/local/rbenv
+            - sudo chmod -R g+rwxXs /usr/local/rbenv
+      - name: InstallDefaultProfile
+        action: CreateFile
+        inputs:
+          - path: /etc/skel/.profile
+            content: |
+              export RBENV_ROOT=/usr/local/rbenv
+              export PATH="$RBENV_ROOT/bin:$PATH"
+              eval "$(rbenv init -)"
+            overwrite: true

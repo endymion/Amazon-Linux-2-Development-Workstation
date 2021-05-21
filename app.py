@@ -34,25 +34,27 @@ deploy_environment = core.Environment(region=param_aws_region)
 
 # creates s3 bucket to store all components used in recipe
 s3ops_stack = S3Ops(app,
-                    "s3ops",
-                    bucket_name=param_bucket_name,
-                    components_prefix=components_prefix,
-                    env=deploy_environment)
+    "s3ops",
+    bucket_name=param_bucket_name,
+    components_prefix=components_prefix,
+    env=deploy_environment)
 
 # builds the image builder pipeline
 AwsCfImagebuilderPipeline(app,
-                          "imagebuilder",
-                          bucket_name=param_bucket_name,
-                          components_prefix=components_prefix,
-                          base_image_arn=param_base_image_arn,
-                          image_pipeline_name=param_image_pipeline,
-                          env=deploy_environment).add_dependency(s3ops_stack)
+    "imagebuilder",
+    bucket_name=param_bucket_name,
+    components_prefix=components_prefix,
+    base_image_arn=param_base_image_arn,
+    image_pipeline_name=param_image_pipeline,
+    env=deploy_environment).add_dependency(s3ops_stack)
 
 # a ci deployment pipeline is created only if source code is part of codecommit and repo details are supplied as
 # parameters
+param_branch_name = config['DEFAULT']['codeRepoBranchName']
 DeploymentPipeline(app,
-                   "deploymentPipeline",
-                   code_commit_repo=param_code_commit_repo,
-                   env=deploy_environment)
+    "deploymentPipeline",
+    code_commit_repo=param_code_commit_repo,
+    env=deploy_environment,
+    default_branch=param_branch_name)
 
 app.synth()

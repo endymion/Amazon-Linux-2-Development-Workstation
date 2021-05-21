@@ -1,0 +1,30 @@
+name: Common Tools
+description: Git, curl, etc
+schemaVersion: 1.0
+phases:
+  - name: build
+    steps:
+      - name: CommonToolsStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+            - sudo yum update -y
+            - sudo yum install -y curl git tmux gcc gcc-c++
+            - sudo yum -y groupinstall "Development Tools"
+            - sudo yum -y install ec2-instance-connect
+            - sudo python3 -m ensurepip
+            - sudo yum -y install python3-devel
+            - sudo yum -y install openssl-devel curl-devel
+            - sudo pip3 install awscli --upgrade
+            - sudo ln -s /usr/bin/pip3 /usr/bin/pip
+  - name: validate
+    steps:
+      - name: CommonToolsStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - curl --version
+            - git --version
+            - tmux -V
+            - gcc --version
