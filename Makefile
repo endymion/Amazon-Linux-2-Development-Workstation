@@ -15,3 +15,8 @@ build-deploy:
 	cdk bootstrap
 	cdk deploy imagebuilder \
 		--require-approval never
+
+workstation-deploy:
+	cdk bootstrap
+	cdk deploy developmentWorkstation \
+		--require-approval never

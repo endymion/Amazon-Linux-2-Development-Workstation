@@ -6,7 +6,7 @@ from aws_cdk import (core,
                      aws_iam as iam)
 
 
-class DeploymentPipeline(core.Stack):
+class CodePipeline(core.Stack):
 
     def __init__(self, scope: core.Construct, id: str, code_commit_repo: str, default_branch: str = 'mainline',
                  **kwargs) -> None:

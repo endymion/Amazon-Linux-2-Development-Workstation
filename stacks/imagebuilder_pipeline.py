@@ -7,10 +7,17 @@ from aws_cdk import (
     aws_ec2 as ec2
 )
 
-class AwsCfImagebuilderPipeline(core.Stack):
+class ImageBuilderPipeline(core.Stack):
 
-    def __init__(self, scope: core.Construct, id: str, bucket_name: str, components_prefix: str, base_image_arn: str,
-        image_pipeline_name: str, **kwargs) -> None:
+    def __init__(self,
+        scope: core.Construct,
+        id: str,
+        bucket_name: str,
+        components_prefix: str,
+        base_image_arn: str,
+        image_pipeline_name: str,
+        instance_type: str,
+        **kwargs) -> None:
 
         super().__init__(scope, id, **kwargs)
 
@@ -60,14 +67,14 @@ class AwsCfImagebuilderPipeline(core.Stack):
             "SAM",
             name="sam",
             platform="Linux",
-            version="1.0.0",
+            version="1.0.1",
             uri=component_sam_uri
         )
 
         recipe = imagebuilder.CfnImageRecipe(self,
             "AmazonLinux2-x86-Development-Workstation-Recipe",
             name="AmazonLinux2-x86-Development-Workstation-Recipe",
-            version="1.0.0",
+            version="1.0.1",
             components=[
                 {"componentArn": "arn:aws:imagebuilder:us-east-1:aws:component/chrony-time-configuration-test/1.0.0"},
                 {"componentArn": "arn:aws:imagebuilder:us-east-1:aws:component/amazon-cloudwatch-agent-linux/1.0.0"},
@@ -209,7 +216,7 @@ class AwsCfImagebuilderPipeline(core.Stack):
         infraconfig = imagebuilder.CfnInfrastructureConfiguration(self,
             "AmazonLinux2-x86-Development-Workstation-InfrastructureConfig",
             name="AmazonLinux2-x86-Development-Workstation-InfrastructureConfig",
-            instance_types=["m5.xlarge"],
+            instance_types=[instance_type],
             instance_profile_name="AmazonLinux2-x86-Development-Workstation-InstanceProfile",
             subnet_id=public_subnet.ref,
             security_group_ids=[webserver_sec_group.ref],

@@ -1,2 +1,11 @@
+parameters.properties
 .env/
+
+# CDK Context & Staging files
+cdk.context.json
+.cdk.staging/
 cdk.out/
+*.tabl.json
+
+__pycache__/
+*.egg-info

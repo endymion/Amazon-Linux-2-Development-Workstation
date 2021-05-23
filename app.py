@@ -3,14 +3,18 @@ import configparser
 
 from aws_cdk import core
 
-from stacks.imagebuilder_pipeline import AwsCfImagebuilderPipeline
 from stacks.s3_ops import S3Ops
-from stacks.deployment_pipeline import DeploymentPipeline
+from stacks.imagebuilder_pipeline import ImageBuilderPipeline
+from stacks.code_pipeline import CodePipeline
+from stacks.development_environment import DevelopmentEnvironment
+from stacks.development_workstation import DevelopmentWorkstation
 
 config = configparser.ConfigParser()
 config.read('parameters.properties')
 
 app = core.App()
+
+param_aws_account = config['DEFAULT']['awsAccount']
 
 param_aws_region = config['DEFAULT']['awsRegion']
 
@@ -27,10 +31,17 @@ param_code_commit_repo = config['DEFAULT']['codeCommitRepoName']
 # imagebuilder pipeline will be built with this name
 param_image_pipeline = config['DEFAULT']['imagePipelineName']
 
+# A personal name that will be appended to resource names.
+personal_name = config['DEFAULT']['personalName']
+
 # s3 prefix/key for storing components
 components_prefix = "components"
 
-deploy_environment = core.Environment(region=param_aws_region)
+# Instance types/
+build_instance_type = config['DEFAULT']['buildInstanceType']
+development_instance_type = config['DEFAULT']['developmentInstanceType']
+
+deploy_environment = core.Environment(region=param_aws_region, account=param_aws_account)
 
 # creates s3 bucket to store all components used in recipe
 s3ops_stack = S3Ops(app,
@@ -40,21 +51,38 @@ s3ops_stack = S3Ops(app,
     env=deploy_environment)
 
 # builds the image builder pipeline
-AwsCfImagebuilderPipeline(app,
+ImageBuilderPipeline(app,
     "imagebuilder",
     bucket_name=param_bucket_name,
     components_prefix=components_prefix,
     base_image_arn=param_base_image_arn,
     image_pipeline_name=param_image_pipeline,
+    instance_type=build_instance_type,
     env=deploy_environment).add_dependency(s3ops_stack)
 
 # a ci deployment pipeline is created only if source code is part of codecommit and repo details are supplied as
 # parameters
 param_branch_name = config['DEFAULT']['codeRepoBranchName']
-DeploymentPipeline(app,
+CodePipeline(app,
     "deploymentPipeline",
     code_commit_repo=param_code_commit_repo,
     env=deploy_environment,
     default_branch=param_branch_name)
+
+DevelopmentEnvironment(app,
+    "developmentEnvironment",
+    bucket_name=param_bucket_name,
+    components_prefix=components_prefix,
+    instance_type=development_instance_type,
+    personal_name=personal_name,
+    env=deploy_environment
+    )
+
+DevelopmentWorkstation(app,
+    "developmentWorkstation-test",
+    bucket_name=param_bucket_name,
+    components_prefix=components_prefix,
+    instance_type=development_instance_type,
+    env=deploy_environment)
 
 app.synth()

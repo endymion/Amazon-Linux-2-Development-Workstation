@@ -1,6 +1,32 @@
-## ImageBuilder Pipeline using AWS CDK
+## Amazon Linux 2 Development Workstation
 
-This sample will create a EC2 Image builder pipeline using CDK and setup CI using code pipeline.
+This project contains code that can create a development environment in an AWS data center and that can manage Amazon Linux 2 workstations that include the things that you need for development, like Git, Python3, Ruby, the CDK, SAM.  Or whatever you need.  Use with VNC is recommended, but you might have better ideas, and you have control.
+
+Your workstations that you create with this code will be based on a custom development image built by a Code Pipeline project watching this project.  The code in this project will set up that pipeline.  
+
+That pipeline will trigger an EC2 Image Builder pipeline that will also be generated from ths project, whichwill use an Image Recipe for setting up your custom development AMI.  It will use a series of Components for installing the packages that you need.  Code Pipeline will build a new custom AMI for your development workstation any time you push changes to your fork of this project to Code Commit.
+
+The development environment that this project will create will include a VPC, so that your development workstations have their own private network.  You can mhave multiple development workstations that can easily reach one another and their shared code folders.
+
+The VPC creates a single shared EFS (NFS) drive that your instances can reach.  And when you run the code in this project to create a new development workstation, it automatically connects the new instance to your shared code drive.  All of your workstations in your VPC will be able to connect to that shared volume.  Even if they're in different availability zones.
+
+This setup keeps your entire development environment predictable and based on versioned code.  Better living through DevOps!
+
+### Background
+
+My motivation for doing development from a cloud VM instance was that I needed more RAM than I could get in a MacBook Pro.  For years, I have tried using things like remove VNC connections and AWS Cloud9 for development.  VS Code plus the AWS CDK is what finally made it workable.
+
+Now I use my Mac for my human interface and it's awesome and reasponsive, and VS Code is well-integrated with my OS.  And I use powerful, well-connected development machines for my code builds.  My entire environment is consistent and predictable and I never install anything manually, where I might forget how I did it months or years later.  And it all seamlessly integrates through the VS Code remote SSH plugin, so that I feel like I'm using VS Code to do local development on my own Mac.  It's faster than doing development on my own Mac through Docker containers.  A lot faster.  And it doesn't consume gigabytes of RAM on my Mac for the Docker VM.
+
+### Tips
+
+#### Burstable instances
+
+The `t3`, and `t3a` instance types are a great value for development.
+
+The Gravitron2 instance types are the best value, and the `t4g` instances would be the ultimate cloud development workstations -- except that it's not always easy to get the toolchains that you need working on those ARM instances.  AWS SAM, for example, just won't work as of this writing.  I'm still using x86 instances that are more expensive until the tools catch up.
+
+Leave a `command` workstation instance running on a `t3a.nano` instance full-time, and use that to run CDK code from this project to spin up other workstations in the same VPC.
 
 ### Getting Started
 
