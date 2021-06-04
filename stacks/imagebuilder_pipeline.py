@@ -71,10 +71,28 @@ class ImageBuilderPipeline(core.Stack):
             uri=component_sam_uri
         )
 
+        component_pg_uri = bucket_uri + '/postgresql.yml'
+        component_pg = imagebuilder.CfnComponent(self,
+            "PostgreSQL",
+            name="postgresql",
+            platform="Linux",
+            version="1.0.1",
+            uri=component_pg_uri
+        )
+
+        component_efs_uri = bucket_uri + '/amazon-efs-utils.yml'
+        component_efs = imagebuilder.CfnComponent(self,
+            "AWS EFS",
+            name="efs-utils",
+            platform="Linux",
+            version="1.0.0",
+            uri=component_efs_uri
+        )
+
         recipe = imagebuilder.CfnImageRecipe(self,
             "AmazonLinux2-x86-Development-Workstation-Recipe",
             name="AmazonLinux2-x86-Development-Workstation-Recipe",
-            version="1.0.1",
+            version="1.0.3",
             components=[
                 {"componentArn": "arn:aws:imagebuilder:us-east-1:aws:component/chrony-time-configuration-test/1.0.0"},
                 {"componentArn": "arn:aws:imagebuilder:us-east-1:aws:component/amazon-cloudwatch-agent-linux/1.0.0"},
@@ -84,7 +102,9 @@ class ImageBuilderPipeline(core.Stack):
                 {"componentArn": component_ruby.attr_arn},
                 {"componentArn": component_cdk.attr_arn},
                 {"componentArn": component_docker.attr_arn},
-                {"componentArn": component_sam.attr_arn}
+                {"componentArn": component_sam.attr_arn},
+                {"componentArn": component_pg.attr_arn},
+                {"componentArn": component_efs.attr_arn}
             ],
             parent_image=base_image_arn
         )
@@ -206,6 +226,16 @@ class ImageBuilderPipeline(core.Stack):
             ip_protocol="tcp",
             from_port=443,
             to_port=443,
+            cidr_ip="0.0.0.0/0",
+            group_id=webserver_sec_group.ref
+        )
+        # Allow nfs to internet
+        nfs_ingress = ec2.CfnSecurityGroupIngress(
+            self,
+            "sec-group-nfs-ingress",
+            ip_protocol="tcp",
+            from_port=2049,
+            to_port=2049,
             cidr_ip="0.0.0.0/0",
             group_id=webserver_sec_group.ref
         )

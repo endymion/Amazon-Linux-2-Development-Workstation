@@ -43,6 +43,8 @@ development_instance_type = config['DEFAULT']['developmentInstanceType']
 
 deploy_environment = core.Environment(region=param_aws_region, account=param_aws_account)
 
+name_prefix = f'development-environment-{personal_name}'
+
 # creates s3 bucket to store all components used in recipe
 s3ops_stack = S3Ops(app,
     "s3ops",
@@ -52,7 +54,7 @@ s3ops_stack = S3Ops(app,
 
 # builds the image builder pipeline
 ImageBuilderPipeline(app,
-    "imagebuilder",
+    f'{name_prefix}-image-builder-pipeline',
     bucket_name=param_bucket_name,
     components_prefix=components_prefix,
     base_image_arn=param_base_image_arn,
@@ -64,13 +66,13 @@ ImageBuilderPipeline(app,
 # parameters
 param_branch_name = config['DEFAULT']['codeRepoBranchName']
 CodePipeline(app,
-    "deploymentPipeline",
+    f'{name_prefix}-deployment-pipeline',
     code_commit_repo=param_code_commit_repo,
     env=deploy_environment,
     default_branch=param_branch_name)
 
 DevelopmentEnvironment(app,
-    "developmentEnvironment",
+    f'{name_prefix}-VPC',
     bucket_name=param_bucket_name,
     components_prefix=components_prefix,
     instance_type=development_instance_type,
@@ -79,7 +81,7 @@ DevelopmentEnvironment(app,
     )
 
 DevelopmentWorkstation(app,
-    "developmentWorkstation-test",
+    f'{name_prefix}-workstation',
     bucket_name=param_bucket_name,
     components_prefix=components_prefix,
     instance_type=development_instance_type,

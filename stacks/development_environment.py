@@ -113,14 +113,38 @@ class DevelopmentEnvironment(core.Stack):
             subnet_id=public_subnet.ref
         )
 
-        webserver_sec_group = ec2.CfnSecurityGroup(
+        # Create internet gateway
+        inet_gateway = ec2.CfnInternetGateway(
+            self,
+            "rds-igw",
+            tags=[core.CfnTag(key="Name",value="rds-igw")]
+        )
+
+        # Attach internet gateway to vpc
+        ec2.CfnVPCGatewayAttachment(
+            self,
+            "igw-attachment",
+            vpc_id=vpc.ref,
+            internet_gateway_id=inet_gateway.ref
+        )
+
+        # Create a new public route to use the internet gateway
+        ec2.CfnRoute(
+            self,
+            "public-route",
+            route_table_id=route_table_public.ref,
+            gateway_id=inet_gateway.ref,
+            destination_cidr_block="0.0.0.0/0"
+        )
+
+        workstation_security_group = ec2.CfnSecurityGroup(
             self,
             "development-workstation-security-group",
             group_description="development workstation security group",
             vpc_id=vpc.ref
         )
 
-        # Restrict SSH port access to only yourself
+        # Allos SSH
         ssh_ingress = ec2.CfnSecurityGroupIngress(
             self,
             "sec-group-ssh-ingress",
@@ -128,9 +152,9 @@ class DevelopmentEnvironment(core.Stack):
             cidr_ip="0.0.0.0/0",
             from_port=22,
             to_port=22,
-            group_id=webserver_sec_group.ref
+            group_id=workstation_security_group.ref
         )
-        # Allow http to internet
+        # Allow HTTP
         http_ingress = ec2.CfnSecurityGroupIngress(
             self,
             "sec-group-http-ingress",
@@ -138,18 +162,27 @@ class DevelopmentEnvironment(core.Stack):
             from_port=80,
             to_port=80,
             cidr_ip="0.0.0.0/0",
-            group_id=webserver_sec_group.ref
+            group_id=workstation_security_group.ref
         )
-        # Allow https to internet
+        # Allow HTTPS
         https_ingress = ec2.CfnSecurityGroupIngress(
             self,
-            "sec-group-https-ingress",
+            "sec-group-nfs-ingress",
             ip_protocol="tcp",
             from_port=443,
             to_port=443,
             cidr_ip="0.0.0.0/0",
-            group_id=webserver_sec_group.ref
+            group_id=workstation_security_group.ref
+        )
+        # Allow NFS
+        nfs_ingress = ec2.CfnSecurityGroupIngress(
+            self,
+            "sec-group-https-ingress",
+            ip_protocol="tcp",
+            from_port=2049,
+            to_port=2049,
+            cidr_ip="0.0.0.0/0",
+            group_id=workstation_security_group.ref
         )
 
-        webserver_sec_group.tags.set_tag(key="Name",value="sg-amazon-linux-2-development-workstation")
-
+        workstation_security_group.tags.set_tag(key="Name",value="sg-amazon-linux-2-development-workstation")

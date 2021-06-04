@@ -1,0 +1,25 @@
+name: PostgreSQL
+description: Database
+schemaVersion: 1.0
+phases:
+  - name: build
+    steps:
+      - name: PostgreSQLBuildStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - sudo yum -y install postgresql-server postgresql-devel
+            - sudo /usr/bin/postgresql-setup initdb
+            - sudo systemctl enable postgresql
+            - sudo systemctl start postgresql
+            - sudo -u postgres createuser -s ec2-user
+            - sudo -u postgres createdb ec2-user
+            - echo 'ALTER USER "ec2-user" WITH SUPERUSER;' | sudo -u postgres psql
+  - name: validate
+    steps:
+      - name: PostgreSQLValidateStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - psql --version
+            - systemctl status postgresql
